@@ -102,10 +102,8 @@ while running:
                     elif balls[ball] == moves[1]:
                         balls[ball] = moves[0]
                 if ball[1] == size[1]-10:
-                    if balls[ball] == moves[2]:
-                        balls[ball] = moves[1]
-                    elif balls[ball] == moves[3]:
-                        balls[ball] = moves[0]
+                    running = False
+                    game_over = True
                 if (ball[0] > door[0]) and (ball[0] < door[0] + door_size[0]):
                     if ball[1] == door[1] - 10:
                         if balls[ball] == moves[2]:
@@ -120,6 +118,20 @@ while running:
                             balls[ball] = moves[1]
                 
     pygame.display.flip()            
-    clock.tick(140)      
-
+    clock.tick(140)     
+    
+while game_over:
+    text = pygame.font.Font(None, 50).render("GAME OVER", 1, (100, 255, 100))
+    text_x = size[0] // 2 - text.get_width() // 2
+    text_y = size[1] // 2 - text.get_height() // 2
+    text_w = text.get_width()
+    text_h = text.get_height()
+    screen.blit(text, (text_x, text_y))
+    pygame.draw.rect(screen, (0, 255, 0), (text_x - 10, text_y - 10, text_w + 20, text_h + 20), 1)
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            game_over = False
+    pygame.display.flip()            
+    clock.tick(140)    
+            
 pygame.quit()
