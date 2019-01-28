@@ -1,0 +1,14 @@
+.
+.
+....bbb....
+...bbbbb...
+..yyyyyyy..
+.ryryyyryr.
+.yyyybyyyy.
+.yyyryryyy.
+.yyyyyyyyy.
+.yyryyyryy.
+.yyyrrryyy.
+..yyyyyyy..
+...yyyyy...
+....yyy....

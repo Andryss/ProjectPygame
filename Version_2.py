@@ -9,6 +9,28 @@ size = 1000, 1000
 tile_size = 68, 33
 ground_size = tile_size[0] * 11 + 34, tile_size[1] * 30 
 screen = pygame.display.set_mode(size)
+level = 0
+
+playlist = ["data\Trr_cha.mp3", "data\Polka.mp3",
+            "data\Trr_cha.mp3", "data\Polka.mp3",
+            "data\Trr_cha.mp3", "data\Polka.mp3",
+            "data\Trr_cha.mp3", "data\Polka.mp3",
+            "data\Trr_cha.mp3", "data\Polka.mp3",
+            "data\Trr_cha.mp3", "data\Polka.mp3",
+            "data\Trr_cha.mp3", "data\Polka.mp3",
+            "data\Trr_cha.mp3", "data\Polka.mp3",
+            "data\Trr_cha.mp3", "data\Polka.mp3",
+            "data\Trr_cha.mp3", "data\Polka.mp3"]
+
+pygame.mixer.music.load(playlist[-1])
+playlist.pop()
+pygame.mixer.music.set_endevent(pygame.USEREVENT)
+pygame.mixer.music.play()
+
+sound1 = pygame.mixer.Sound('data/ball.ogg')
+sound2 = pygame.mixer.Sound('data/tile.ogg')
+sound3 = pygame.mixer.Sound('data/fail.ogg')
+sound4 = pygame.mixer.Sound('data/queen.ogg')
 
 def load_image(name, colorkey=None):
     fullname = os.path.join('data/', name)
@@ -31,40 +53,60 @@ def terminate():
 
 start = True
 def start_screen(image):
-    global start, level
+    global start, level, points
     fon = pygame.transform.scale(load_image(image), (size[0], size[1]))
     screen.blit(fon, (0, 0))
     if level == 10:
-        intro_text = ["ИГРА ПРОЙДЕНА !!!", "",
-                  "ПОЗДРАВЛЯЮ !!!"]
-        text_coord = 200
-        x = 60
+        pygame.mixer.music.pause()
+        sound4.play()
+        intro_text = ["ИГРА ПРОЙДЕНА!!!", "Всего очков:  " + str(points)]
+        text_coord = 670
+        x = 200
+        color = pygame.Color('white')
+        
+        font = pygame.font.SysFont('Times New Roman', 75)
+        for line in intro_text:
+            string_rendered = font.render(line, 1, color)
+            intro_rect = string_rendered.get_rect()
+            text_coord += 60
+            intro_rect.top = text_coord
+            intro_rect.x = x
+            text_coord += intro_rect.height
+            screen.blit(string_rendered, intro_rect)
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    terminate()
+            pygame.display.flip()
+            clock.tick(50)
+        
     else:
         intro_text = ["УРОВЕНЬ ПРОЙДЕН !!!", "",
                   "Нажмите любую кнопку,",
                   "чтобы перейти на уровень "+ str(level + 1)] 
         text_coord = 50
-        x = 40
-    if not start:        
-        font = pygame.font.Font(None, 95)
+        x = 35
+        color = pygame.Color('green')
+        if not start:        
+            font = pygame.font.SysFont('Arial', 85)
         
-        for line in intro_text:
-            string_rendered = font.render(line, 1, pygame.Color('green'))
-            intro_rect = string_rendered.get_rect()
-            text_coord += 80
-            intro_rect.top = text_coord
-            intro_rect.x = x
-            text_coord += intro_rect.height
-            screen.blit(string_rendered, intro_rect)
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                terminate()
-            elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-                start = False
-                return
-        pygame.display.flip()
-        clock.tick(50)    
+            for line in intro_text:
+                string_rendered = font.render(line, 1, color)
+                intro_rect = string_rendered.get_rect()
+                text_coord += 80
+                intro_rect.top = text_coord
+                intro_rect.x = x
+                text_coord += intro_rect.height
+                screen.blit(string_rendered, intro_rect)
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    terminate()
+                elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+                    start = False
+                    return
+            pygame.display.flip()
+            clock.tick(50)    
         
 start_screen('background.jpg')
 
@@ -126,6 +168,10 @@ class Ball(pygame.sprite.Sprite):
         global points
         if not self.stopping:
             self.rect = self.rect.move(self.vx, self.vy)
+            if pygame.sprite.spritecollideany(self, horizontal_borders) or pygame.sprite.spritecollideany(self, vertical_borders) or pygame.sprite.spritecollideany(self, player_group):
+                sound1.play()
+            if pygame.sprite.spritecollideany(self, all_tiles):
+                sound2.play()
             if pygame.sprite.spritecollideany(self, horizontal_borders):
                 self.vy = -self.vy
             if pygame.sprite.spritecollideany(self, vertical_borders):
@@ -135,28 +181,35 @@ class Ball(pygame.sprite.Sprite):
                     ball_coords = ball.get_coords()
                 for player in player_group:
                     player_coords = player.rect.x, player.rect.y
-                    if ball_coords[0] >= player_coords[0] and ball_coords[0] <= player_coords[0] + tile_size[1] * 4:
+                    if ball_coords[0] >= player_coords[0] - 20 and ball_coords[0] <= player_coords[0] + tile_size[1] * 4 + 20:
                         self.vy = -self.vy
                     elif ball_coords[1] >= player_coords[1] and ball_coords[1] <= player_coords[1] + tile_size[1]:
                         self.vx = -self.vx
                     else:
                         if ball_coords[0] < player_coords[0] and ball_coords[1] < player_coords[1]:
-                            len_x = - (player_coords[0] - ball_coords[0])
-                            len_y = - (player_coords[1] - ball_coords[1])
+                            len_x = player_coords[0] - ball_coords[0]
+                            len_y = player_coords[1] - ball_coords[1]
                         elif ball_coords[0] > player_coords[0] + tile_size[1] * 4 and ball_coords[1] < player_coords[1]:
-                            len_x = - (ball_coords[0] - player_coords[0] + tile_size[0] * 4)
-                            len_y = - (player_coords[1] - ball_coords[1])
+                            len_x = ball_coords[0] - player_coords[0] + tile_size[0] * 4
+                            len_y = player_coords[1] - ball_coords[1]
+                        elif ball_coords[0] <= player_coords[0] and ball_coords[1] >= player_coords[1] + tile_size[1]:
+                            len_x = player_coords[0] - ball_coords[0]
+                            len_y = ball_coords[1] - player_coords[1] - tile_size[1]
+                        elif ball_coords[0] >= player_coords[0] + tile_size[0] and ball_coords[1] >= player_coords[1] + tile_size[1]:
+                            len_x = ball_coords[0] - player_coords[0] - tile_size[0]
+                            len_y = ball_coords[1] - player_coords[1] - tile_size[1]
                         if len_x < len_y:
                             self.vx = -self.vx
                         elif len_x > len_y:
                             self.vy = -self.vy
                         elif len_x == len_y:
                             self.vx = -self.vx
-                            self.vy = -self.vy 
+                            self.vy = -self.vy
             if pygame.sprite.spritecollideany(self, all_tiles):
                 tiles = pygame.sprite.spritecollide(self, all_tiles, True)
                 for tile in tiles:
                     points += 20
+                    create_particles((tile.rect.x + tile_size[0] // 2, tile.rect.y + tile_size[1] // 2))
                 for ball in ball_group:
                     ball_coords = ball.get_coords()
                 if len(tiles) != 1:
@@ -167,23 +220,31 @@ class Ball(pygame.sprite.Sprite):
                             tile_coords = tile.x, tile.y
                 else:
                     tile_coords = tiles[0].x, tiles[0].y
-                if ball_coords[0] >= tile_coords[0] and ball_coords[0] <= tile_coords[0] + tile_size[0]:
+                if ball_coords[0] >= tile_coords[0] and ball_coords[0] <= tile_coords[0] + tile_size[0]: 
                     self.vy = -self.vy
                 elif ball_coords[1] >= tile_coords[1] and ball_coords[1] <= tile_coords[1] + tile_size[1]:
                     self.vx = -self.vx
                 else:
                     if ball_coords[0] <= tile_coords[0] and ball_coords[1] <= tile_coords[1]:
-                        len_x = - (tile_coords[0] - ball_coords[0])
-                        len_y = - (tile_coords[1] - ball_coords[1])
+                        if ball_coords[0] + 16 > tile_coords[0]:
+                            len_x, len_y = 2, 1
+                        else:
+                            len_x, len_y = 1, 2
                     elif ball_coords[0] >= tile_coords[0] + tile_size[0] and ball_coords[1] <= tile_coords[1]:
-                        len_x = - (ball_coords[0] - tile_coords[0] - tile_size[0])
-                        len_y = - (tile_coords[1] - ball_coords[1])
+                        if ball_coords[0] - 16 < tile_coords[0] + tile_size[0]:
+                            len_x, len_y = 2, 1
+                        else:
+                            len_x, len_y = 1, 2
                     elif ball_coords[0] <= tile_coords[0] and ball_coords[1] >= tile_coords[1] + tile_size[1]:
-                        len_x = - (tile_coords[0] - ball_coords[0])
-                        len_y = - (ball_coords[1] - tile_coords[1] - tile_size[1])
+                        if ball_coords[0] + 16 > tile_coords[0]:
+                            len_x, len_y = 2, 1
+                        else:
+                            len_x, len_y = 1, 2
                     elif ball_coords[0] >= tile_coords[0] + tile_size[0] and ball_coords[1] >= tile_coords[1] + tile_size[1]:
-                        len_x = - (ball_coords[0] - tile_coords[0] - tile_size[0])
-                        len_y = - (ball_coords[1] - tile_coords[1] - tile_size[1])
+                        if ball_coords[0] - 16 < tile_coords[0] + tile_size[0]:
+                            len_x, len_y = 2, 1
+                        else:
+                            len_x, len_y = 1, 2
                     if len_x < len_y:
                         self.vx = -self.vx
                     elif len_x > len_y:
@@ -204,6 +265,47 @@ class Border(pygame.sprite.Sprite):
             self.add(horizontal_borders)
             self.image = pygame.transform.scale(load_image('top.png'), (ground_size[0] - 10, 10))
             self.rect = self.image.get_rect().move(x1 - 5, y1 - 5)
+            
+gravity = 0.25     
+screen_rect = (10, 10, ground_size[0], ground_size[1])       
+class Particle(pygame.sprite.Sprite):
+    # сгенерируем частицы разного размера
+    fire = [pygame.transform.scale(load_image('gold.png'), (10, 10))]
+    for scale in (5, 10, 20):
+        fire.append(pygame.transform.scale(fire[0], (scale, scale)))
+
+    def __init__(self, pos, dx, dy):
+        super().__init__(all_sprites)
+        self.add(all_particles)
+        self.image = random.choice(self.fire)
+        self.rect = self.image.get_rect()
+
+        # у каждой частицы своя скорость - это вектор
+        self.velocity = [dx, dy]
+        # и свои координаты
+        self.rect.x, self.rect.y = pos
+
+        # гравитация будет одинаковой
+        self.gravity = gravity
+
+    def update(self):
+        # применяем гравитационный эффект: 
+        # движение с ускорением под действием гравитации
+        self.velocity[1] += self.gravity
+        # перемещаем частицу
+        self.rect.x += self.velocity[0]
+        self.rect.y += self.velocity[1]
+        # убиваем, если частица ушла за экран
+        if not self.rect.colliderect(screen_rect):
+            self.kill()
+
+def create_particles(position):
+    # количество создаваемых частиц
+    particle_count = 20
+    # возможные скорости
+    numbers = range(-5, 6)
+    for _ in range(particle_count):
+        Particle(position, random.choice(numbers), random.choice(numbers))
 
 tile_images = {
     'blue': load_image('blue.png'),
@@ -244,7 +346,6 @@ def generate_level(level):
                 pass
 
 fon = pygame.transform.scale(load_image('fon.png'), (size[0], size[1]))
-level = 0
 speed = 1
 pauze = False
 game_over = False
@@ -258,6 +359,7 @@ while True:
     player_group = pygame.sprite.Group() 
     all_tiles = pygame.sprite.Group()
     coin_group = pygame.sprite.Group()
+    all_particles = pygame.sprite.Group()
         
     Border(10, 10, 10, ground_size[1] - 10)
     Border(ground_size[0] - 10, 10, ground_size[0] - 10, ground_size[1] - 10)
@@ -265,6 +367,8 @@ while True:
     Player()  
     Ball()
     AnimatedSprite(load_image("money.png"), 16, 1, size[0] - 200, 50)
+    
+    pygame.mixer.music.set_volume(0.5)
     
     level += 1
     speed += 1
@@ -276,7 +380,15 @@ while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
+            if event.type == pygame.USEREVENT: 
+                if len ( playlist ) > 0:      
+                    pygame.mixer.music.queue(playlist[-1])
+                    playlist.pop()
+                    pygame.mixer.music.play()
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    for ball in ball_group:
+                        ball.vy -= 1
                 if event.key == pygame.K_SPACE:
                     if first:
                         first = False
@@ -288,6 +400,7 @@ while True:
                         else:
                             pauze = False
         if not pauze:
+            pygame.mixer.music.set_volume(1)
             if pygame.key.get_pressed()[pygame.K_LEFT]:
                 for player in player_group:
                     player.move_left()
@@ -298,8 +411,13 @@ while True:
                 ball.move()
                 if ball.rect.y >= size[1]:
                     game_over = True
+            for particle in all_particles:
+                particle.update()
             screen.blit(fon, (0, 0))
+            seconds_in_game = (pygame.time.get_ticks() - start_seconds) // 1000
+            screen.blit(pygame.font.Font(None, 50).render("TIME {}".format(str(seconds_in_game)), 1, (255, 255, 255)), (size[0] - 200, 200))
         else:
+            pygame.mixer.music.set_volume(0.5)
             pauze = pygame.sprite.Group()
             sprite = pygame.sprite.Sprite()
             sprite.image = pygame.transform.scale(load_image('pauze.png'), (200, 200))
@@ -310,9 +428,7 @@ while True:
             pauze.draw(screen)
         for coin in coin_group:
             coin.update()
-        seconds_in_game = (pygame.time.get_ticks() - start_seconds) // 1000
         screen.blit(pygame.font.Font(None, 50).render(str(points) , 1, (255, 255, 255)), (size[0] - 170, 50))
-        screen.blit(pygame.font.Font(None, 50).render("TIME {}".format(str(seconds_in_game)), 1, (255, 255, 255)), (size[0] - 200, 200))
         screen.blit(pygame.font.Font(None, 50).render("LEVEL {}".format(str(level)) , 1, (255, 255, 255)), (size[0] - 200, 450))
         all_sprites.draw(screen)
         pygame.display.flip()
@@ -321,37 +437,42 @@ while True:
             break
     if game_over:
         break
-    pygame.time.wait(1000)
+    pygame.time.wait(500)
     if level != 10:
         start_screen('fon.png')
     elif level == 10:
-        start_screen("background.jpg")
+        start_screen("gameend.jpg")
         break
-    
-gameover = pygame.sprite.Group()
-class GameOver(pygame.sprite.Sprite): 
-    def __init__(self, group):
-        super().__init__(group)
-        self.image = pygame.transform.scale(load_image('gameover.png'), (size[0], size[1]))
-        self.rect = self.image.get_rect()
-        self.rect.x = -1000
-        self.rect.y = 0
-    def get_coords(self):
-        return (self.rect.x, self.rect.y)
-    def move_right(self):
-        self.rect.x += 5
-GameOver(gameover)
-running = True
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-    for table in gameover:
-        if table.get_coords()[0] < 0:
-            table.move_right()
-    screen.blit(fon, (0, 0))
-    all_sprites.draw(screen)
-    gameover.draw(screen)
-    pygame.display.flip()
-    clock.tick(140)
+if game_over:  
+    gameover = pygame.sprite.Group()
+    pygame.mixer.music.pause()
+    class GameOver(pygame.sprite.Sprite): 
+        def __init__(self, group):
+            super().__init__(group)
+            self.image = pygame.transform.scale(load_image('gameover.jpg'), (ground_size[0], size[1]))
+            self.rect = self.image.get_rect()
+            self.rect.x = -1000
+            self.rect.y = 0
+        def get_coords(self):
+            return (self.rect.x, self.rect.y)
+        def move_right(self):
+            self.rect.x += 5
+    GameOver(gameover)
+    running = True
+    sound3.play()
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        for table in gameover:
+            if table.get_coords()[0] < 0:
+                table.move_right()
+        screen.blit(fon, (0, 0))
+        screen.blit(pygame.font.Font(None, 50).render(str(points) , 1, (255, 255, 255)), (size[0] - 170, 50))
+        screen.blit(pygame.font.Font(None, 50).render("TIME {}".format(str(seconds_in_game)), 1, (255, 255, 255)), (size[0] - 200, 200))
+        screen.blit(pygame.font.Font(None, 50).render("LEVEL {}".format(str(level)) , 1, (255, 255, 255)), (size[0] - 200, 450))
+        all_sprites.draw(screen)
+        gameover.draw(screen)
+        pygame.display.flip()
+        clock.tick(140)
 pygame.quit()
