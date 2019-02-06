@@ -1,9 +1,11 @@
 .
 .
-ggggggggggg
+gxxxgggxxxg
 r...rrr...r
 bbbbbbbbbbb
-y...byb...y
+y.x.byb.x.y
 yyyyyyyyyyy
 g...ggg...g
-rrrrrrrrrrr
+rrrxxxxxrrr
+b.x.bbb.x.b
+gxxxgggxxxg
