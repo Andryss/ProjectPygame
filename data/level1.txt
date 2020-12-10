@@ -1,0 +1,12 @@
+.
+.
+yyyyyyyyyyy
+.
+rrrrrrrrrrr
+b.x..y..x.b
+b.........b
+g...ggg...g
+g...ggg...g
+b.........b
+b.x..y..x.b
+rrrrrrrrrrr

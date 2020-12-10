@@ -1,0 +1,5 @@
+lives=3
+total_points=0
+upgrade_kolvo=0
+points_from_tile=20
+randombreaker=0
